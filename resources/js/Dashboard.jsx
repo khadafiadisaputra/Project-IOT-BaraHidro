@@ -244,13 +244,13 @@ const App = () => {
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Suhu */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+        <div className="bg-white p-6 rounded-2xl shadow-md border border-slate-200 hover:shadow-lg transitionflex flex-col justify-between">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm text-slate-500 font-medium">Suhu Air</p>
               <h3 className="text-3xl font-bold text-slate-800 mt-1">{sensor.temp}<span className="text-lg text-slate-400">°C</span></h3>
             </div>
-            <div className="p-3 bg-orange-50 text-orange-500 rounded-xl">
+           <div className="p-3 bg-blue-500 text-white rounded-xl shadow-md shadow-blue-500/30">
               <Thermometer size={24} />
             </div>
           </div>
@@ -262,16 +262,17 @@ const App = () => {
         {/* PPM */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between relative overflow-hidden">
           {sensor.ppm < settings.targetPPM && (
-            <div className="absolute top-0 right-0 w-2 h-full bg-red-500 animate-pulse"></div>
-          )}
+  <div className="absolute top-0 right-0 w-2 h-full bg-blue-500 animate-pulse"></div>
+)}
+          
           <div className="flex justify-between items-start">
             <div>
               <p className="text-sm text-slate-500 font-medium">Nutrisi (PPM)</p>
-              <h3 className={`text-3xl font-bold mt-1 ${sensor.ppm < settings.targetPPM ? 'text-red-500' : 'text-slate-800'}`}>
+              <h3 className={`text-3xl font-bold mt-1 ${sensor.ppm < settings.targetPPM ? 'text-blue-500' : 'text-slate-800'}`}>
                 {sensor.ppm}
               </h3>
             </div>
-            <div className="p-3 bg-blue-50 text-blue-500 rounded-xl">
+            <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
               <Droplets size={24} />
             </div>
           </div>
@@ -282,13 +283,21 @@ const App = () => {
         </div>
 
         {/* Pompa */}
-        <div className={`p-6 rounded-2xl shadow-sm border transition-colors duration-300 flex flex-col justify-between ${sensor.pumpStatus === 'on' ? 'bg-emerald-500 border-emerald-600 text-white' : 'bg-white border-slate-100'}`}>
+        <div className={`p-6 rounded-2xl shadow-sm border transition-colors duration-300 flex flex-col justify-between ${
+  sensor.pumpStatus === 'on' 
+    ? 'bg-blue-500 border-blue-600 text-white' 
+    : 'bg-white border-slate-100'
+}`}>
           <div className="flex justify-between items-start">
             <div>
               <p className={`text-sm font-medium ${sensor.pumpStatus === 'on' ? 'text-emerald-100' : 'text-slate-500'}`}>Status Pompa</p>
               <h3 className="text-3xl font-bold mt-1 uppercase">{sensor.pumpStatus}</h3>
             </div>
-            <div className={`p-3 rounded-xl ${sensor.pumpStatus === 'on' ? 'bg-emerald-400 text-white animate-spin-slow' : 'bg-slate-50 text-slate-400'}`}>
+           <div className={`p-3 rounded-xl ${
+  sensor.pumpStatus === 'on' 
+    ? 'bg-blue-400 text-white animate-spin-slow' 
+    : 'bg-slate-50 text-slate-400'
+}`}>
               <Settings size={24} className={sensor.pumpStatus === 'on' ? 'animate-spin' : ''} style={{ animationDuration: '3s'}} />
             </div>
           </div>
@@ -307,7 +316,7 @@ const App = () => {
                 {sensor.deviceStatus === 'online' ? 'Online' : 'Offline'}
               </h3>
             </div>
-            <div className={`p-3 rounded-xl ${sensor.deviceStatus === 'online' ? 'bg-green-50 text-green-500' : 'bg-red-100 text-red-600'}`}>
+            <div className={`p-3 rounded-xl ${sensor.deviceStatus === 'online' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
               <Wifi size={24} />
             </div>
           </div>
@@ -367,14 +376,18 @@ const App = () => {
 
           <div className={`transition-opacity duration-300 ${settings.mode === 'auto' ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
              <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-slate-200 rounded-xl">
-                <div className={`w-32 h-32 rounded-full flex items-center justify-center mb-6 transition-all duration-500 ${sensor.pumpStatus === 'on' ? 'bg-emerald-100 shadow-[0_0_40px_rgba(16,185,129,0.4)]' : 'bg-slate-100'}`}>
-                  <Power size={48} className={`transition-colors duration-500 ${sensor.pumpStatus === 'on' ? 'text-emerald-500' : 'text-slate-400'}`} />
-                </div>
+                <div className={`w-32 h-32 rounded-full flex items-center justify-center mb-6 transition-all duration-500 ${sensor.pumpStatus === 'on' ? 'bg-blue-100 shadow-[0_0_40px_rgba(59,130,246,0.4))]' : 'bg-slate-100'}`}>
+                  <Power size={48} className={`transition-colors duration-500 ${
+    sensor.pumpStatus === 'on' 
+      ? 'text-blue-500' 
+      : 'text-slate-400'
+  }`} />
+</div>
                 
                 <div className="flex gap-4">
                   <button 
                     onClick={() => handleManualPump('on')}
-                    className={`px-8 py-3 rounded-xl font-bold text-white transition-all ${sensor.pumpStatus === 'on' ? 'bg-emerald-500 shadow-lg shadow-emerald-500/30' : 'bg-slate-300 hover:bg-emerald-400'}`}
+                    className={`px-8 py-3 rounded-xl font-bold text-white transition-all ${sensor.pumpStatus === 'on' ? 'bg-blue-500 shadow-blue-500/30' : 'bg-slate-300 hover:bg-blue-400'}`}
                   >
                     ON
                   </button>
@@ -508,18 +521,22 @@ const App = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-[#f8fafc] font-sans text-slate-800 overflow-hidden">
+    <div className="flex h-screen bg-slate-100 font-sans text-slate-800 overflow-hidden">
       
       {/* Sidebar (Desktop) & Overlay (Mobile) */}
       <div className={`fixed inset-0 bg-slate-800/50 z-20 transition-opacity lg:hidden ${isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setIsMobileMenuOpen(false)}></div>
       
-      <aside className={`fixed lg:static inset-y-0 left-0 w-64 bg-white border-r border-slate-200 z-30 transform transition-transform duration-300 flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`fixed lg:static inset-y-0 left-0 w-64 bg-slate-900 text-white shadow z-30 transform transition-transform duration-300 flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="h-16 flex items-center px-6 border-b border-slate-100">
-          <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center shadow-sm mr-3">
-             <Droplets size={20} className="text-white"/>
-          </div>
-          <h1 className="font-bold text-lg tracking-tight">HydroIoT<span className="text-emerald-500">.</span></h1>
+        <div className="w-10 h-10 flex items-center justify-center mr-3">
+  <img 
+    src="/logo.jpeg" 
+    className="w-8 h-8 object-contain rounded"
+  />
+</div>
+          <h1 className="font-bold text-lg tracking-tight">BaraHydroSolutions<span className="text-emerald-500">.</span></h1>
         </div>
+        
         
         <nav className="flex-1 px-4 py-6 space-y-1">
           {navItems.map(item => {
@@ -529,7 +546,11 @@ const App = () => {
               <button
                 key={item.id}
                 onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
-                className={`w-full flex items-center px-4 py-3 rounded-xl transition-all ${isActive ? 'bg-emerald-50 text-emerald-600 font-semibold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}
+               className={`w-full flex items-center px-4 py-3 rounded-xl transition-all ${
+  isActive 
+    ? 'bg-blue-500 text-white font-semibold shadow-lg shadow-blue-500/30' 
+    : 'text-gray-400 hover:bg-white/10 hover:text-white'
+}`}
               >
                 <Icon size={20} className="mr-3" />
                 {item.label}
@@ -539,11 +560,11 @@ const App = () => {
         </nav>
 
         <div className="p-4 border-t border-slate-100">
-          <div className="flex items-center px-4 py-3 bg-slate-50 rounded-xl">
+         <div className="flex items-center px-4 py-3 rounded-xl bg-blue-500 text-white shadow-lg shadow-blue-500/30">
              <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">A</div>
              <div className="ml-3">
                <p className="text-sm font-semibold">Admin User</p>
-               <p className="text-xs text-slate-500">admin@hydro.com</p>
+               <p className="text-xs text-blue-100">admin@hydro.com</p>
              </div>
           </div>
         </div>
@@ -562,7 +583,7 @@ const App = () => {
           
           <div className="flex items-center space-x-4">
             {/* Status Indicator */}
-            <div className="hidden sm:flex items-center px-3 py-1 bg-green-50 text-green-600 rounded-full text-xs font-medium border border-green-100">
+            <div className="hidden sm:flex items-center px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-medium border border-blue-100">
               <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span> System Active
             </div>
             
@@ -600,7 +621,7 @@ const App = () => {
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth">
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-6xl mx-auto space-y-6">
             {activeTab === 'dashboard' && renderDashboard()}
             {activeTab === 'control' && renderControl()}
             {activeTab === 'history' && renderHistory()}
