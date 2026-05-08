@@ -6,7 +6,7 @@ import {
   History, Sliders, Zap, AlertCircle
 } from 'lucide-react';
 
-const API_BASE = 'http://127.0.0.1:8000/api/device';
+const API_BASE = '/api';
 
 const App = () => {
   // --- STATE MANAGEMENT ---
