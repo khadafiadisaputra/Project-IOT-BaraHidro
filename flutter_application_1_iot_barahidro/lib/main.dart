@@ -59,7 +59,7 @@ class _MainPageState extends State<MainPage> {
   }
 }
 
-// --- HALAMAN DASHBOARD ---
+// --- DASHBOARD PAGE ---
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
   @override
@@ -79,51 +79,29 @@ class _DashboardPageState extends State<DashboardPage> {
     _deviceData = _apiService.fetchSensorData();
   }
 
-  void _refreshData() {
-    setState(() {
-      _deviceData = _apiService.fetchSensorData();
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        title: const Text("BaraHydro Dashboard", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A237E))),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        actions: [
-          IconButton(onPressed: _refreshData, icon: const Icon(Icons.refresh, color: Colors.blue)),
-        ],
-      ),
+      appBar: AppBar(title: const Text("Dashboard", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A237E))), backgroundColor: Colors.white, elevation: 0),
       body: FutureBuilder<DeviceData>(
         future: _deviceData,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-
           final data = snapshot.hasData ? snapshot.data! : DeviceData(temperature: 30.25, ppm: 58, pumpStatus: 'off');
-
           return ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
-              Row(
-                children: [
-                  Expanded(child: _buildModernCard("Suhu Air", "${data.temperature}°C", Icons.thermostat, Colors.orange)),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildModernCard("Nutrisi", "${data.ppm} PPM", Icons.opacity, Colors.blue)),
-                ],
-              ),
+              Row(children: [
+                Expanded(child: _buildInfoCard("Suhu Air", "${data.temperature}°C", Icons.thermostat, Colors.orange)),
+                const SizedBox(width: 16),
+                Expanded(child: _buildInfoCard("Nutrisi", "${data.ppm} PPM", Icons.opacity, Colors.blue)),
+              ]),
               const SizedBox(height: 16),
-              _buildModernCard("Status Pompa", data.pumpStatus.toUpperCase(), Icons.power, data.pumpStatus == 'on' ? Colors.green : Colors.grey),
+              _buildInfoCard("Status Pompa", data.pumpStatus.toUpperCase(), Icons.power, data.pumpStatus == 'on' ? Colors.green : Colors.red),
               const SizedBox(height: 16),
-              // Panggil komponen Interactive Chart untuk Suhu
               InteractiveChartCard(title: "Grafik Suhu Realtime (°C)", icon: Icons.show_chart, color: Colors.orange, dataPoints: suhuData, isInt: false),
               const SizedBox(height: 16),
-              // Panggil komponen Interactive Chart untuk PPM
               InteractiveChartCard(title: "Grafik PPM Realtime", icon: Icons.bar_chart, color: Colors.blue, dataPoints: ppmData, isInt: true),
-              const SizedBox(height: 24),
-              _buildStatusDevice(data.temperature > 0),
             ],
           );
         },
@@ -131,205 +109,20 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildModernCard(String title, String value, IconData icon, Color color) {
+  Widget _buildInfoCard(String title, String value, IconData icon, Color color) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(title, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-                Icon(icon, color: color, size: 20),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatusDevice(bool isOnline) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(color: isOnline ? Colors.green[50] : Colors.red[50], borderRadius: BorderRadius.circular(12), border: Border.all(color: isOnline ? Colors.green[100]! : Colors.red[100]!)),
-      child: Row(
-        children: [
-          Icon(isOnline ? Icons.check_circle : Icons.error, color: isOnline ? Colors.green : Colors.red),
-          const SizedBox(width: 10),
-          Text("Status Device: ", style: TextStyle(color: isOnline ? Colors.green[800] : Colors.red[800])),
-          Text(isOnline ? "ONLINE" : "OFFLINE", style: TextStyle(fontWeight: FontWeight.bold, color: isOnline ? Colors.green[800] : Colors.red[800])),
-        ],
-      ),
-    );
-  }
-}
-
-// --- KOMPONEN WIDGET KHUSUS GRAFIK INTERAKTIF ---
-class InteractiveChartCard extends StatefulWidget {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final List<double> dataPoints;
-  final bool isInt;
-
-  const InteractiveChartCard({super.key, required this.title, required this.icon, required this.color, required this.dataPoints, required this.isInt});
-
-  @override
-  State<InteractiveChartCard> createState() => _InteractiveChartCardState();
-}
-
-class _InteractiveChartCardState extends State<InteractiveChartCard> {
-  double? _touchX; // Variabel untuk menyimpan posisi sentuhan jari/kursor
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))]),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(widget.icon, color: widget.color, size: 18),
-                const SizedBox(width: 8),
-                Text(widget.title, style: TextStyle(color: Colors.grey[800], fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // Area untuk mendeteksi sentuhan
-            GestureDetector(
-              onPanUpdate: (details) => setState(() => _touchX = details.localPosition.dx),
-              onPanDown: (details) => setState(() => _touchX = details.localPosition.dx),
-              onPanEnd: (_) => setState(() => _touchX = null),
-              onPanCancel: () => setState(() => _touchX = null),
-              child: SizedBox(
-                height: 120,
-                width: double.infinity,
-                child: CustomPaint(
-                  painter: InteractiveLineChartPainter(widget.dataPoints, widget.color, isInt: widget.isInt, touchX: _touchX),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(title, style: const TextStyle(color: Colors.grey, fontSize: 13)), Icon(icon, color: color, size: 20)]),
+        const SizedBox(height: 12),
+        Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+      ]),
     );
   }
 }
 
-// --- PELUKIS GRAFIK (SEKARANG PUNYA FITUR TOOLTIP) ---
-class InteractiveLineChartPainter extends CustomPainter {
-  final List<double> data;
-  final Color color;
-  final bool isInt;
-  final double? touchX;
-
-  InteractiveLineChartPainter(this.data, this.color, {this.isInt = false, this.touchX});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.isEmpty) return;
-
-    final paintLine = Paint()..color = color..strokeWidth = 3.0..style = PaintingStyle.stroke..strokeCap = StrokeCap.round;
-    final paintFill = Paint()..style = PaintingStyle.fill..shader = ui.Gradient.linear(const Offset(0, 0), Offset(0, size.height), [color.withOpacity(0.3), color.withOpacity(0.0)]);
-    final paintGrid = Paint()..color = Colors.grey.withOpacity(0.2)..strokeWidth = 1.0..style = PaintingStyle.stroke;
-
-    double maxData = data.reduce((a, b) => a > b ? a : b);
-    double minData = data.reduce((a, b) => a < b ? a : b);
-    if (maxData == minData) { maxData += 1; minData -= 1; }
-    double range = maxData - minData;
-
-    double paddingLeft = 35.0;
-    double chartWidth = size.width - paddingLeft;
-    double stepX = chartWidth / (data.length - 1);
-
-    // Gambar label grid (Y-Axis)
-    void drawLabelAndGrid(double value, double y) {
-      canvas.drawLine(Offset(paddingLeft, y), Offset(size.width, y), paintGrid);
-      final text = isInt ? value.toInt().toString() : value.toStringAsFixed(1);
-      final textPainter = TextPainter(text: TextSpan(text: text, style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr);
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(0, y - 6));
-    }
-
-    drawLabelAndGrid(maxData, 0);
-    drawLabelAndGrid(minData + (range / 2), size.height / 2);
-    drawLabelAndGrid(minData, size.height);
-
-    final path = Path();
-    final fillPath = Path();
-
-    // Mapping koordinat titik
-    List<Offset> points = [];
-    for (int i = 0; i < data.length; i++) {
-      double x = paddingLeft + (i * stepX);
-      double y = size.height - ((data[i] - minData) / range * size.height);
-      points.add(Offset(x, y));
-
-      if (i == 0) {
-        path.moveTo(x, y);
-        fillPath.moveTo(x, size.height);
-        fillPath.lineTo(x, y);
-      } else {
-        path.lineTo(x, y);
-        fillPath.lineTo(x, y);
-      }
-    }
-
-    fillPath.lineTo(paddingLeft + chartWidth, size.height);
-    fillPath.close();
-
-    canvas.drawPath(fillPath, paintFill);
-    canvas.drawPath(path, paintLine);
-
-    // --- LOGIKA TOOLTIP SAAT DISENTUH ---
-    if (touchX != null && touchX! >= paddingLeft && touchX! <= size.width) {
-      // Cari titik index terdekat dari posisi kursor
-      int nearestIndex = ((touchX! - paddingLeft) / stepX).round().clamp(0, data.length - 1);
-      Offset activePoint = points[nearestIndex];
-      String tooltipValue = isInt ? data[nearestIndex].toInt().toString() : data[nearestIndex].toStringAsFixed(2);
-
-      // Gambar garis vertikal
-      canvas.drawLine(Offset(activePoint.dx, 0), Offset(activePoint.dx, size.height), Paint()..color = color.withOpacity(0.5)..strokeWidth = 1.5..style = PaintingStyle.stroke);
-
-      // Gambar titik fokus (bulatan)
-      canvas.drawCircle(activePoint, 6.0, Paint()..color = color);
-      canvas.drawCircle(activePoint, 3.0, Paint()..color = Colors.white);
-
-      // Gambar Kotak Tooltip
-      final textPainter = TextPainter(text: TextSpan(text: tooltipValue, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr);
-      textPainter.layout();
-
-      // Atur posisi tooltip supaya tidak kepotong ke atas
-      double tooltipY = activePoint.dy - 25;
-      if (tooltipY < 0) tooltipY = activePoint.dy + 15;
-
-      final tooltipRect = Rect.fromCenter(center: Offset(activePoint.dx, tooltipY), width: textPainter.width + 16, height: textPainter.height + 10);
-      canvas.drawRRect(RRect.fromRectAndRadius(tooltipRect, const Radius.circular(6)), Paint()..color = Colors.black87);
-      textPainter.paint(canvas, Offset(activePoint.dx - textPainter.width / 2, tooltipY - textPainter.height / 2));
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant InteractiveLineChartPainter oldDelegate) {
-    // Agar grafik merender ulang jika posisi sentuhan berubah
-    return oldDelegate.touchX != touchX;
-  }
-}
-
-// --- HALAMAN CONTROL ---
+// --- CONTROL PAGE ---
 class ControlPage extends StatefulWidget {
   const ControlPage({super.key});
   @override
@@ -338,99 +131,161 @@ class ControlPage extends StatefulWidget {
 
 class _ControlPageState extends State<ControlPage> {
   bool isPumpOn = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(title: const Text("Kontrol Pompa", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A237E))), backgroundColor: Colors.white, elevation: 0),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text("Mode Saat Ini: MANUAL", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 40),
-            GestureDetector(
-              onTap: () => setState(() => isPumpOn = !isPumpOn),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                padding: const EdgeInsets.all(40),
-                decoration: BoxDecoration(color: isPumpOn ? Colors.green[50] : Colors.red[50], shape: BoxShape.circle, border: Border.all(color: isPumpOn ? Colors.green : Colors.red, width: 2)),
-                child: Icon(Icons.power_settings_new, size: 80, color: isPumpOn ? Colors.green : Colors.red),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(children: [
+          Container(
+            padding: const EdgeInsets.all(30),
+            width: double.infinity,
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 15)]),
+            child: Column(children: [
+              const Text("Mode Saat Ini: MANUAL", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 40),
+              GestureDetector(
+                onTap: () => setState(() => isPumpOn = !isPumpOn),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: const EdgeInsets.all(40),
+                  decoration: BoxDecoration(color: isPumpOn ? Colors.green[50] : Colors.red[50], shape: BoxShape.circle, border: Border.all(color: isPumpOn ? Colors.green : Colors.red, width: 2)),
+                  child: Icon(Icons.power_settings_new, size: 80, color: isPumpOn ? Colors.green : Colors.red),
+                ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(height: 40),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                _buildButton("ON", true), const SizedBox(width: 20), _buildButton("OFF", false),
+              ]),
+            ]),
+          ),
+        ]),
       ),
+    );
+  }
+
+  Widget _buildButton(String label, bool status) {
+    bool active = isPumpOn == status;
+    return ElevatedButton(
+      onPressed: () => setState(() => isPumpOn = status),
+      style: ElevatedButton.styleFrom(backgroundColor: active ? (status ? Colors.green : Colors.red) : Colors.white, foregroundColor: active ? Colors.white : Colors.grey, minimumSize: const Size(100, 45)),
+      child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 }
 
-// --- HALAMAN HISTORY ---
-class HistoryPage extends StatelessWidget {
+// --- HISTORY PAGE (DENGAN FILTER) ---
+class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
 
   @override
+  State<HistoryPage> createState() => _HistoryPageState();
+}
+
+class _HistoryPageState extends State<HistoryPage> {
+  // Value default dan list filter sudah diedit tanpa kata "Per"
+  String selectedFilter = "Jam";
+  final List<String> filters = ["Jam", "Hari", "Minggu", "Bulan"];
+
+  // Simulasi data yang berubah berdasarkan filter
+  List<Map<String, String>> _getFilteredData() {
+    if (selectedFilter == "Jam") {
+      return [
+        {"waktu": "19:00", "suhu": "30.2", "ppm": "58"},
+        {"waktu": "18:00", "suhu": "30.1", "ppm": "55"},
+        {"waktu": "17:00", "suhu": "29.9", "ppm": "52"},
+      ];
+    } else if (selectedFilter == "Hari") {
+      return [
+        {"waktu": "09 Mei", "suhu": "30.1", "ppm": "56"},
+        {"waktu": "08 Mei", "suhu": "29.8", "ppm": "54"},
+        {"waktu": "07 Mei", "suhu": "30.3", "ppm": "57"},
+      ];
+    } else {
+      return [
+        {"waktu": "Data Terlampir", "suhu": "--", "ppm": "--"},
+      ];
+    }
+  }
+
+  void _exportCSV() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text("Mengekspor data $selectedFilter ke CSV..."),
+      backgroundColor: Colors.green,
+    ));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> historyData = [
-      {"waktu": "16:55", "suhu": "30.25", "ppm": "58", "status": "OFF"},
-      {"waktu": "16:50", "suhu": "30.25", "ppm": "58", "status": "OFF"},
-      {"waktu": "16:45", "suhu": "30.20", "ppm": "58", "status": "ON"},
-      {"waktu": "16:40", "suhu": "30.15", "ppm": "45", "status": "OFF"},
-      {"waktu": "16:35", "suhu": "30.10", "ppm": "10", "status": "OFF"},
-    ];
+    final historyData = _getFilteredData();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(title: const Text("Riwayat Data", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A237E))), backgroundColor: Colors.white, elevation: 0),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            color: Colors.white,
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(child: Text("Waktu", style: TextStyle(fontWeight: FontWeight.bold))),
-                Expanded(child: Text("Suhu", style: TextStyle(fontWeight: FontWeight.bold))),
-                Expanded(child: Text("PPM", style: TextStyle(fontWeight: FontWeight.bold))),
-                Text("Pompa", style: TextStyle(fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: ListView.separated(
-              itemCount: historyData.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final item = historyData[index];
-                return Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                  color: Colors.white,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(child: Text(item["waktu"]!, style: const TextStyle(color: Colors.grey))),
-                      Expanded(child: Text("${item["suhu"]}°C", style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.w500))),
-                      Expanded(child: Text(item["ppm"]!, style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w500))),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: item["status"] == "ON" ? Colors.green[50] : Colors.grey[100], borderRadius: BorderRadius.circular(6)),
-                        child: Text(item["status"]!, style: TextStyle(fontSize: 12, color: item["status"] == "ON" ? Colors.green : Colors.grey[600], fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
+      appBar: AppBar(
+        title: const Text("Riwayat", style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A237E))),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          IconButton(onPressed: _exportCSV, icon: const Icon(Icons.file_download, color: Color(0xFF1A237E))),
         ],
       ),
+      body: Column(children: [
+        // FILTER HEADER
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          color: Colors.white,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Filter Tampilan:", style: TextStyle(fontWeight: FontWeight.w500, color: Colors.grey)),
+              DropdownButton<String>(
+                value: selectedFilter,
+                underline: const SizedBox(),
+                items: filters.map((String value) {
+                  return DropdownMenuItem<String>(value: value, child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A237E))));
+                }).toList(),
+                onChanged: (newValue) => setState(() => selectedFilter = newValue!),
+              ),
+            ],
+          ),
+        ),
+        const Divider(height: 1),
+        // TABEL HEADER
+        Container(
+          padding: const EdgeInsets.all(16),
+          color: Colors.white,
+          child: Row(children: const [
+            Expanded(child: Text("Waktu", style: TextStyle(fontWeight: FontWeight.bold))),
+            Expanded(child: Text("Suhu", style: TextStyle(fontWeight: FontWeight.bold))),
+            Expanded(child: Text("Nutrisi", style: TextStyle(fontWeight: FontWeight.bold))),
+          ]),
+        ),
+        const Divider(height: 1),
+        // LIST DATA
+        Expanded(
+          child: ListView.separated(
+            itemCount: historyData.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (ctx, i) => Container(
+              padding: const EdgeInsets.all(16),
+              color: Colors.white,
+              child: Row(children: [
+                Expanded(child: Text(historyData[i]["waktu"]!, style: const TextStyle(color: Colors.grey))),
+                Expanded(child: Text("${historyData[i]["suhu"]}°C", style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold))),
+                Expanded(child: Text("${historyData[i]["ppm"]} PPM", style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold))),
+              ]),
+            ),
+          ),
+        ),
+      ]),
     );
   }
 }
 
-// --- HALAMAN SETTINGS ---
+// --- SETTINGS PAGE ---
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
   @override
@@ -447,7 +302,7 @@ class _SettingsPageState extends State<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Padding(padding: const EdgeInsets.only(bottom: 12, left: 4), child: const Text("Mode Operasi", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey))),
+          const Padding(padding: EdgeInsets.only(bottom: 12, left: 4), child: Text("Mode Operasi", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey))),
           Container(
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))]),
             child: ListTile(
@@ -456,7 +311,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(height: 20),
-          Padding(padding: const EdgeInsets.only(bottom: 12, left: 4), child: const Text("Konfigurasi Nutrisi", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey))),
+          const Padding(padding: EdgeInsets.only(bottom: 12, left: 4), child: Text("Konfigurasi Nutrisi", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey))),
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))]),
@@ -478,4 +333,81 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
+}
+
+// --- INTERACTIVE CHART COMPONENT ---
+class InteractiveChartCard extends StatefulWidget {
+  final String title; final IconData icon; final Color color; final List<double> dataPoints; final bool isInt;
+  const InteractiveChartCard({super.key, required this.title, required this.icon, required this.color, required this.dataPoints, required this.isInt});
+  @override State<InteractiveChartCard> createState() => _InteractiveChartCardState();
+}
+
+class _InteractiveChartCardState extends State<InteractiveChartCard> {
+  double? _touchX;
+  @override Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)]),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [Icon(widget.icon, color: widget.color, size: 18), const SizedBox(width: 8), Text(widget.title, style: const TextStyle(fontWeight: FontWeight.bold))]),
+        const SizedBox(height: 20),
+        GestureDetector(
+          onPanUpdate: (d) => setState(() => _touchX = d.localPosition.dx),
+          onPanDown: (d) => setState(() => _touchX = d.localPosition.dx),
+          onPanEnd: (_) => setState(() => _touchX = null),
+          child: SizedBox(height: 120, width: double.infinity, child: CustomPaint(painter: FullInteractivePainter(widget.dataPoints, widget.color, isInt: widget.isInt, touchX: _touchX))),
+        ),
+      ]),
+    );
+  }
+}
+
+class FullInteractivePainter extends CustomPainter {
+  final List<double> data; final Color color; final bool isInt; final double? touchX;
+  FullInteractivePainter(this.data, this.color, {this.isInt = false, this.touchX});
+
+  @override void paint(Canvas canvas, Size size) {
+    if (data.isEmpty) return;
+    double maxV = data.reduce((a, b) => a > b ? a : b);
+    double minV = data.reduce((a, b) => a < b ? a : b);
+    if (maxV == minV) { maxV += 1; minV -= 1; }
+    double range = maxV - minV;
+    double pad = 35.0; double w = size.width - pad; double step = w / (data.length - 1);
+
+    final gridPaint = Paint()..color = Colors.grey.withOpacity(0.15)..strokeWidth = 1;
+    for (int i = 0; i <= 2; i++) {
+      double y = size.height * (i / 2);
+      double val = maxV - (range * (i / 2));
+      canvas.drawLine(Offset(pad, y), Offset(size.width, y), gridPaint);
+      final tp = TextPainter(text: TextSpan(text: isInt ? val.toInt().toString() : val.toStringAsFixed(1), style: const TextStyle(color: Colors.grey, fontSize: 10)), textDirection: TextDirection.ltr)..layout();
+      tp.paint(canvas, Offset(0, y - 6));
+    }
+
+    final path = Path(); final fillPath = Path();
+    List<Offset> pts = [];
+    for (int i = 0; i < data.length; i++) {
+      double x = pad + (i * step);
+      double y = size.height - ((data[i] - minV) / range * size.height);
+      pts.add(Offset(x, y));
+      if (i == 0) { path.moveTo(x, y); fillPath.moveTo(x, size.height); fillPath.lineTo(x, y); }
+      else { path.lineTo(x, y); fillPath.lineTo(x, y); }
+    }
+    fillPath.lineTo(size.width, size.height); fillPath.close();
+    canvas.drawPath(fillPath, Paint()..style = PaintingStyle.fill..shader = ui.Gradient.linear(const Offset(0, 0), Offset(0, size.height), [color.withOpacity(0.2), color.withOpacity(0)]));
+    canvas.drawPath(path, Paint()..color = color..strokeWidth = 3..style = PaintingStyle.stroke..strokeCap = StrokeCap.round);
+
+    if (touchX != null && touchX! >= pad) {
+      int idx = ((touchX! - pad) / step).round().clamp(0, data.length - 1);
+      Offset p = pts[idx];
+      canvas.drawLine(Offset(p.dx, 0), Offset(p.dx, size.height), gridPaint..color = color.withOpacity(0.5));
+      canvas.drawCircle(p, 6, Paint()..color = color);
+      canvas.drawCircle(p, 3, Paint()..color = Colors.white);
+
+      final tp = TextPainter(text: TextSpan(text: isInt ? data[idx].toInt().toString() : data[idx].toStringAsFixed(2), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)), textDirection: TextDirection.ltr)..layout();
+      double tx = p.dx - (tp.width / 2) - 8; double ty = p.dy - 35;
+      canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(tx, ty, tp.width + 16, 24), const Radius.circular(6)), Paint()..color = Colors.black87);
+      tp.paint(canvas, Offset(tx + 8, ty + 4));
+    }
+  }
+  @override bool shouldRepaint(covariant FullInteractivePainter old) => old.touchX != touchX;
 }
