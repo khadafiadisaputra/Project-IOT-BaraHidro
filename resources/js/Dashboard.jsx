@@ -22,11 +22,11 @@ const App = () => {
 
   // Sensor & Device State
   const [sensor, setSensor] = useState({
-    temp: 25.4,
-    ppm: 820,
-    pumpStatus: 'off',
-    deviceStatus: 'online',
-    lastUpdate: new Date().toLocaleTimeString(),
+  temp: 0,
+  ppm: 0,
+  pumpStatus: 'off',
+  deviceStatus: 'offline',
+  lastUpdate: '-',
   });
 
   // History State
@@ -45,98 +45,55 @@ const App = () => {
 
   // --- FETCH DATA FROM API ---
   const fetchLatestData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [latestResponse, pumpResponse] = await Promise.all([
-        axios.get(`${API_BASE}/latest-data`),
-        axios.get(`${API_BASE}/pump-status`)
-      ]);
-      
-      const { latest_data, settings: apiSettings } = latestResponse.data;
-      const { pump_status } = pumpResponse.data;
+  try {
+    setLoading(true);
+    setError(null);
 
-      console.log('API Response:', { latest_data, apiSettings, pump_status });
+    const response = await axios.get('/api/iot-data');
+    const data = response.data;
 
-      // Default: assume online if we got valid data
-      let isOnline = false;
-      let tempValue = 0;
-      let ppmValue = 0;
-      let lastUpdateTime = new Date().toLocaleTimeString();
+    console.log('API Response:', data);
 
-      if (latest_data) {
-        // Try to parse timestamp with multiple fallbacks
-        let parsedDate = null;
-        
-        if (latest_data.recorded_at) {
-          parsedDate = new Date(latest_data.recorded_at);
-        } else if (latest_data.created_at) {
-          parsedDate = new Date(latest_data.created_at);
-        }
+    const tempValue = Number(data.temperature ?? 0);
+    const ppmValue = Number(data.tds ?? 0);
+    const pumpValue = String(data.pump ?? 'OFF').toLowerCase();
+    const isOnline = data.online === true;
 
-        // If we have valid data, assume device is online
-        if (!isNaN(parsedDate?.getTime?.())) {
-          const currentTime = new Date();
-          const timeDiffSeconds = (currentTime - parsedDate) / 1000;
-          isOnline = timeDiffSeconds >= 0 && timeDiffSeconds <= 120; // 2 minutes timeout
-          lastUpdateTime = parsedDate.toLocaleTimeString();
-          console.log('Time check:', { timeDiffSeconds, isOnline });
-        } else {
-          // If date invalid but data exists, still mark as online
-          isOnline = true;
-          if (latest_data.recorded_at) {
-            lastUpdateTime = latest_data.recorded_at;
-          } else if (latest_data.created_at) {
-            lastUpdateTime = latest_data.created_at;
-          }
-        }
+    const lastUpdateTime = new Date().toLocaleTimeString();
 
-        tempValue = latest_data.temperature || 0;
-        ppmValue = latest_data.ppm || 0;
-      }
+    setSensor(prev => ({
+      ...prev,
+      temp: tempValue,
+      ppm: ppmValue,
+      pumpStatus: pumpValue,
+      deviceStatus: isOnline ? 'online' : 'offline',
+      lastUpdate: lastUpdateTime,
+    }));
 
-      setSensor(prev => ({
-        ...prev,
-        temp: tempValue,
+    setHistory(prev => {
+      const newEntry = {
+        time: lastUpdateTime,
         ppm: ppmValue,
-        pumpStatus: pump_status || 'off',
-        deviceStatus: isOnline ? 'online' : 'offline',
-        lastUpdate: lastUpdateTime,
-      }));
+        temp: tempValue,
+        pumpStatus: pumpValue,
+      };
 
-      if (apiSettings) {
-        setSettings({
-          mode: apiSettings.mode,
-          targetPPM: apiSettings.ppm_min,
-          pumpDelay: apiSettings.pump_delay,
-        });
-      }
+      const newHist = [...prev, newEntry];
+      if (newHist.length > 20) newHist.shift();
+      return newHist;
+    });
 
-      // Update history
-      if (latest_data) {
-        setHistory(prev => {
-          const newEntry = {
-            time: lastUpdateTime,
-            ppm: ppmValue,
-            temp: tempValue,
-            pumpStatus: pump_status || 'off',
-          };
-          const newHist = [...prev, newEntry];
-          if (newHist.length > 20) newHist.shift();
-          return newHist;
-        });
-      }
-    } catch (err) {
-      console.error('API Error:', err);
-      setError('Failed to fetch data from API. Please check connection.');
-      setSensor(prev => ({
-        ...prev,
-        deviceStatus: 'offline',
-      }));
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (err) {
+    console.error('API Error:', err);
+    setError('Gagal mengambil data dari ESP32.');
+    setSensor(prev => ({
+      ...prev,
+      deviceStatus: 'offline',
+    }));
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchLatestData();
@@ -151,20 +108,21 @@ const App = () => {
   };
 
   const handleManualPump = async (action) => {
-    if (settings.mode === 'auto') return;
-    
-    try {
-      const response = await axios.post(`${API_BASE}/control`, {
-        mode: 'manual',
-        pump_action: action,
-      });
-      addNotification(`Pompa ${action === 'on' ? 'dinyalakan' : 'dimatikan'} secara manual.`);
-      await fetchLatestData(); // Refresh data after action
-    } catch (err) {
-      addNotification('Gagal mengontrol pompa. Coba lagi.');
-      console.error('Control Error:', err);
+  try {
+    if (action === 'on') {
+      await axios.get('/pump/on');
+    } else {
+      await axios.get('/pump/off');
     }
-  };
+
+    addNotification(`Pompa ${action === 'on' ? 'dinyalakan' : 'dimatikan'} secara manual.`);
+    await fetchLatestData();
+
+  } catch (err) {
+    addNotification('Gagal mengontrol pompa. Coba lagi.');
+    console.error('Control Error:', err);
+  }
+};
 
   const saveSettings = async (e) => {
     e.preventDefault();
