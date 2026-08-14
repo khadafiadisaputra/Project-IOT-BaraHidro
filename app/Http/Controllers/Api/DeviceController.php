@@ -14,9 +14,10 @@ class DeviceController extends Controller
 {
     public function storeSensorData(Request $request): JsonResponse
     {
+        // SECURITY UPDATE: Penambahan batas min dan max untuk mencegah Integer/Float Overflow
         $validator = Validator::make($request->all(), [
-            'temperature' => 'required|numeric',
-            'ppm' => 'required|numeric',
+            'temperature' => 'required|numeric|between:0,100', // Suhu air logis antara 0 - 100 Celcius
+            'ppm' => 'required|numeric|between:0,5000',        // PPM logis mentok di kisaran 5000
         ]);
 
         if ($validator->fails()) {
@@ -63,10 +64,11 @@ class DeviceController extends Controller
 
     public function updateControl(Request $request): JsonResponse
     {
+        // SECURITY UPDATE: Penambahan batas max agar sistem tidak bisa dijebol dengan angka absurd
         $validator = Validator::make($request->all(), [
             'mode' => 'sometimes|string|in:auto,manual',
-            'ppm_min' => 'sometimes|integer|min:0',
-            'pump_delay' => 'sometimes|integer|min:0',
+            'ppm_min' => 'sometimes|integer|min:0|max:5000',
+            'pump_delay' => 'sometimes|integer|min:0|max:3600', // Maksimal delay 3600 detik (1 jam)
             'pump_action' => 'sometimes|string|in:on,off',
         ]);
 
