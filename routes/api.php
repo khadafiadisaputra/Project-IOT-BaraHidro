@@ -22,8 +22,6 @@ Route::post('/login', [AuthController::class, 'login']);
 // ==========================================
 // ENDPOINT TERLINDUNGI & RATE LIMITED
 // ==========================================
-// auth:sanctum  -> Wajib punya token
-// throttle:60,1 -> Maksimal 60 request per 1 menit (1 request / detik)
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     
     // Group endpoint khusus IoT
